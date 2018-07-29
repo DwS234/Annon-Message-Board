@@ -20,7 +20,8 @@ mongoose.connect(CONNECTION_STRING, (err) => {
 
 module.exports = function (app) {
   
-  app.route('/api/threads/:board');
+  app.route('/api/threads/:board')
+  ;
     
   app.route('/api/replies/:board');
 
