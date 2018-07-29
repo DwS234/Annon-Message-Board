@@ -17,6 +17,11 @@ const ReplySchema = new mongoose.Schema({
        type: String,
        required: true
    },
+   parentThread: {
+       type: mongoose.Schema.Types.ObjectId,
+       ref: "Thread",
+       required: true
+   }
 });
 
 module.exports = mongoose.model("Reply", ReplySchema);

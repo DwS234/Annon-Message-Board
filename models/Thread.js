@@ -5,6 +5,11 @@ const ThreadSchema = new mongoose.Schema({
        type: String,
        required: true
    },
+   parentBoard: {
+       type: mongoose.Schema.Types.ObjectId,
+       res: "Board",
+       required: true
+   },
    created_on: {
        type: Date,
        default: new Date()

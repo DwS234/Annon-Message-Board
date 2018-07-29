@@ -26,7 +26,8 @@ const Reply = require('../models/Reply');
 function createThreadAndSaveToBoard(threadText, delete_password, board) {
   Thread.create({
     text: threadText,
-    delete_password: delete_password
+    delete_password: delete_password,
+    parentBoard: board._id
   }, (err, createdThread) => {
     if (err)
       return err;
@@ -102,7 +103,7 @@ module.exports = function (app) {
         if(!foundThread)
           return res.status(400).send("Thread with given id was not found");
 
-        Reply.create({text: replyText, delete_password: replyDeletePasswrod}, (err, createdReply) => {
+        Reply.create({text: replyText, delete_password: replyDeletePasswrod, parentThread: foundBoard._id}, (err, createdReply) => {
           if (err)
             return res.status(400).send(err);
           if(!createdReply)
@@ -112,10 +113,47 @@ module.exports = function (app) {
           foundThread.bumped_on = createdReply.created_on;
           foundThread.save();
 
-          
-          
           res.redirect("/b/" + boardName + "/" + thread_id);
         }); 
+      });
+    });
+
+    app.route("/api/threads/:board")
+    .get((req, res) => {
+      const boardName = req.params.board;
+
+      Board.findOne({
+        name: boardName
+      }).populate("threads").exec((err, foundBoard) => {
+        if (err)
+          return res.status(400).send(err);
+
+        if (!foundBoard)
+          return res.status(400).send("Specified board was not found");
+
+        Thread.find({parentBoard: foundBoard._id}).sort("-bumped_on").limit(10).populate("replies").exec((err, recentThreads) => {
+
+          recentThreads = recentThreads.map(thread => {
+            if(thread.replies != null) {
+              thread.replies = thread.replies.sort((a, b) => {
+                return new Date(b.created_on) - new Date(a.created_on);
+              }).filter((reply, index) => {
+                return index < 3;
+              });
+            }
+
+            thread.delete_password = undefined;
+            thread.reported = undefined;
+            thread.parentBoard = undefined;
+            thread.__v = undefined;
+
+            return thread;
+          });
+
+          
+
+          res.send(recentThreads);
+        });
       });
     });
 }
